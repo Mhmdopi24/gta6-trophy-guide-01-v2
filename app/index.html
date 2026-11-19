@@ -3,23 +3,111 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GTA VI trophy checklist</title>
+<title>Leonida Platinum Atlas — GTA VI Trophy Guide &amp; Tracker</title>
+<meta name="description" content="An offline guide and tracker for all 55 Grand Theft Auto VI PlayStation 5 trophies: checklist, roadmap, missables and cited guides.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>GTA VI trophy checklist</h1>
-  <p id="progress">0 of 55 earned</p>
+<header class="masthead">
+  <div class="masthead-text">
+    <p class="kicker">Grand Theft Auto VI · PlayStation 5 · Offline guide &amp; tracker</p>
+    <h1>Leonida Platinum Atlas</h1>
+    <p class="standfirst">All 55 official trophies — 1 platinum, 2 gold, 6 silver, 46 bronze, 28 hidden until earned — each with its official description and a guide in our own words that cites its sources. Progress is saved in this browser.</p>
+  </div>
+  <div class="scoreboard" aria-label="Your progress">
+    <p class="big-count"><span id="earned-count">0</span><span class="big-count-of"> / 55 earned</span></p>
+    <p class="big-percent"><span id="earned-percent">0%</span> to the platinum</p>
+    <div class="meter" role="progressbar" aria-label="Overall progress" aria-valuemin="0" aria-valuemax="55" aria-valuenow="0" id="overall-meter"><span id="overall-fill"></span></div>
+    <ul class="grade-tallies">
+      <li><span class="swatch sw-platinum"></span>Platinum <strong id="tally-platinum">0/1</strong></li>
+      <li><span class="swatch sw-gold"></span>Gold <strong id="tally-gold">0/2</strong></li>
+      <li><span class="swatch sw-silver"></span>Silver <strong id="tally-silver">0/6</strong></li>
+      <li><span class="swatch sw-bronze"></span>Bronze <strong id="tally-bronze">0/46</strong></li>
+    </ul>
+  </div>
 </header>
-<div class="controls">
-  <label>Grade <select id="grade"><option value="all">All</option><option value="platinum">Platinum</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="bronze">Bronze</option></select></label>
-  <button id="export" type="button">Export progress</button>
-  <label class="import">Import progress <input id="import" type="file" accept="application/json"></label>
-</div>
-<table>
-  <thead><tr><th>Earned</th><th>Trophy</th><th>Grade</th><th>How to get it</th></tr></thead>
-  <tbody id="rows"></tbody>
-</table>
+
+<nav class="view-tabs" aria-label="Views">
+  <button type="button" class="tab is-active" data-view="checklist">Checklist &amp; guides</button>
+  <button type="button" class="tab" data-view="roadmap">Roadmap</button>
+  <button type="button" class="tab" data-view="missables">Missables <span class="tab-badge" id="missable-badge">7</span></button>
+  <button type="button" class="tab" data-view="next">Next up</button>
+</nav>
+
+<section class="toolbar" aria-label="Filters and progress tools">
+  <label class="tool tool-search">Search
+    <input id="search" type="search" placeholder="Trophy, mission, place…" autocomplete="off">
+  </label>
+  <label class="tool">Kind
+    <select id="kind-filter">
+      <option value="all">All kinds</option>
+      <option value="story">Story</option>
+      <option value="missable">Missable</option>
+      <option value="collectibles">Collectibles</option>
+      <option value="activities">Activities</option>
+      <option value="online">Online</option>
+    </select>
+  </label>
+  <label class="tool">Grade
+    <select id="grade-filter">
+      <option value="all">All grades</option>
+      <option value="platinum">Platinum</option>
+      <option value="gold">Gold</option>
+      <option value="silver">Silver</option>
+      <option value="bronze">Bronze</option>
+    </select>
+  </label>
+  <label class="tool tool-check"><input id="hide-earned" type="checkbox"> Hide earned</label>
+  <label class="tool tool-check"><input id="spoiler-toggle" type="checkbox"> Spoiler shield</label>
+  <span class="tool-spacer"></span>
+  <button type="button" id="export-btn" class="tool-btn">Export progress</button>
+  <label class="tool-btn file-btn">Import progress<input id="import-file" type="file" accept="application/json,.json" hidden></label>
+  <button type="button" id="reset-btn" class="tool-btn danger">Reset</button>
+</section>
+<p class="spoiler-note" id="spoiler-note" hidden>Spoiler shield is on: unearned story trophies show masked names and descriptions until you earn them. Guides stay readable — open one only if you want the details.</p>
+<p class="online-note" id="online-note" hidden>The official list contains no online trophies — all 55 are earned in the single-player game as published, so the online filter is empty by design.</p>
+
+<main>
+  <section id="view-checklist" class="view">
+    <div class="checklist-layout">
+      <div class="list-pane">
+        <p class="list-summary" id="list-summary"></p>
+        <ol class="trophy-list" id="trophy-list"></ol>
+      </div>
+      <aside class="detail-pane" id="detail-pane" aria-label="Trophy guide"></aside>
+    </div>
+  </section>
+
+  <section id="view-roadmap" class="view" hidden>
+    <div class="roadmap-head">
+      <h2>Roadmap to the platinum</h2>
+      <p class="roadmap-meta"><strong>Estimated time:</strong> 90–140 hours for a story-first run with the stage 7–9 sweeps — an estimate derived from the official descriptions and the cited guides, not a promise. <strong>Difficulty:</strong> moderate — no trophy in the official list demands a harder difficulty setting; the risk is the seven missable windows, not skill. This roadmap is built from the official descriptions: the chapters and missions they name come first, in order; missables are flagged at the stage where they are lost; then collectibles by their counts, activities, and cleanup to 100%.</p>
+    </div>
+    <div id="roadmap-stages"></div>
+  </section>
+
+  <section id="view-missables" class="view" hidden>
+    <div class="roadmap-head">
+      <h2>Missable trophies — read before you play</h2>
+      <p class="roadmap-meta">Seven trophies are flagged missable. Each flag is derived from the wording of its official description — a one-time location, a choice, a fail-and-retry event — and each entry says why, when it can be missed, and the point of no return. Every flag is labelled as inference where it is one: keep a manual save before each window and a flag costs you minutes, not a playthrough.</p>
+    </div>
+    <div id="missable-list"></div>
+  </section>
+
+  <section id="view-next" class="view" hidden>
+    <div class="roadmap-head">
+      <h2>Next up</h2>
+      <p class="roadmap-meta">Your next unearned trophies in roadmap order — missable trophies that are at risk in the stage you have reached come first, so nothing with a closing window is ever buried under a grind.</p>
+    </div>
+    <ol class="next-list" id="next-list"></ol>
+  </section>
+</main>
+
+<footer class="colophon">
+  <p><strong>Sources &amp; honesty.</strong> Trophy names, descriptions, grades and hidden flags follow the official list as published by <a href="https://www.exophase.com/game/grand-theft-auto-vi-psn/trophies/">Exophase</a> and <a href="https://psnprofiles.com/trophies/43531-grand-theft-auto-vi">PSNProfiles</a> (the two agree on every name, description and grade; PSNProfiles also lists the counts PlayStation tracks). Methods are cross-checked against PowerPyx, PlayStationTrophies.org, the PSNProfiles guide and TrueTrophies, and are always retold in our own words; where a step is our own inference from the official description, the guide says so. A cited guide beats a detailed uncited one — so we cite.</p>
+  <p>Leonida Platinum Atlas is a fan-made, open-source guide. It is not affiliated with Rockstar Games or PlayStation, and it uses no Rockstar artwork or logos. Progress lives only in this browser's local storage; export it to keep a copy.</p>
+</footer>
+
 <script type="module" src="app.js"></script>
 </body>
 </html>

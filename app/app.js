@@ -1,52 +1,146 @@
-// A plain checklist of the 55 trophies: tick one off and it stays ticked (localStorage); export and import the ticks.
-const KEY = 'gta6-trophy-checklist';
-const rows = document.getElementById('rows');
-const grade = document.getElementById('grade');
-let earned = new Set(JSON.parse(localStorage.getItem(KEY) ?? '[]'));
-const doc = await (await fetch('data/trophies.json')).json();
+// Leonida Platinum Atlas — boot and wiring.
+//
+// Loads the official trophy data from data/trophies.json (a file of this app,
+// fetched from the same static server — the app works offline once served),
+// restores the reader's progress from localStorage, and wires the checklist,
+// filters, spoiler shield, export / import / reset, and the four views.
 
-function save() {
-  localStorage.setItem(KEY, JSON.stringify([...earned]));
+import {
+  loadProgress, saveProgress, isEarned, setEarned, setCount, setNote,
+  exportProgress, parseImportedProgress,
+} from './js/store.js';
+import { trophyMatches } from './js/filters.js';
+import { renderHeader, renderChecklist, renderDetail, renderRoadmap, renderMissables, renderNext } from './js/views.js';
+
+const data = await (await fetch('data/trophies.json')).json();
+const progress = loadProgress();
+
+const state = {
+  view: 'checklist',
+  selectedName: null,
+  filters: { kind: 'all', grade: 'all', search: '', hideEarned: false },
+};
+
+const byName = new Map(data.trophies.map((t) => [t.name, t]));
+if (!byName.has(state.selectedName)) {
+  const missable = data.trophies.find((t) => t.name === 'Actions Speak Louder');
+  state.selectedName = missable ? missable.name : data.trophies[0].name;
 }
 
-function render() {
-  rows.replaceChildren();
-  for (const t of doc.trophies) {
-    if (grade.value !== 'all' && t.grade !== grade.value) continue;
-    const tr = document.createElement('tr');
-    const box = document.createElement('input');
-    box.type = 'checkbox';
-    box.checked = earned.has(t.name);
-    box.addEventListener('change', () => {
-      if (box.checked) earned.add(t.name);
-      else earned.delete(t.name);
-      save();
-      render();
-    });
-    const cells = [box, `${t.name}\n${t.description}`, t.grade, t.guide];
-    for (const c of cells) {
-      const td = document.createElement('td');
-      if (typeof c === 'string') td.textContent = c;
-      else td.append(c);
-      tr.append(td);
-    }
-    rows.append(tr);
+function selectedTrophy() {
+  return byName.get(state.selectedName) ?? null;
+}
+
+function persistAndRender() {
+  saveProgress(progress);
+  renderAll();
+}
+
+function renderAll() {
+  renderHeader({ data, progress });
+  const visible = data.trophies.filter((t) => trophyMatches(t, state.filters, progress, isEarned));
+  renderChecklist({
+    data, progress, visible,
+    selectedName: state.selectedName,
+    onSelect: (trophy) => selectTrophy(trophy),
+    onToggleEarned: (trophy, on) => { setEarned(progress, trophy, on); persistAndRender(); },
+  });
+  renderDetail({
+    data, progress,
+    trophy: selectedTrophy(),
+    onToggleEarned: (trophy, on) => { setEarned(progress, trophy, on); persistAndRender(); },
+    onCountChange: (trophy, value) => { setCount(progress, trophy, value); persistAndRender(); },
+    onNoteChange: (trophy, text) => { setNote(progress, trophy, text); saveProgress(progress); },
+  });
+  renderRoadmap({ data, progress, onSelect: (trophy, view) => selectTrophy(trophy, view) });
+  renderMissables({ data, progress, onSelect: (trophy, view) => selectTrophy(trophy, view) });
+  renderNext({ data, progress, onSelect: (trophy, view) => selectTrophy(trophy, view) });
+  document.getElementById('spoiler-note').hidden = !progress.spoilerShield;
+  document.getElementById('online-note').hidden = state.filters.kind !== 'online';
+}
+
+function selectTrophy(trophy, view) {
+  state.selectedName = trophy.name;
+  if (view) showView(view);
+  // Arriving from the roadmap, missables or planner: if the current filters
+  // would hide this trophy in the checklist, clear them so the reader lands
+  // on the row they just picked, with its guide open beside it.
+  if (view === 'checklist' && !trophyMatches(trophy, state.filters, progress, isEarned)) {
+    state.filters = { kind: 'all', grade: 'all', search: '', hideEarned: false };
+    document.getElementById('search').value = '';
+    document.getElementById('kind-filter').value = 'all';
+    document.getElementById('grade-filter').value = 'all';
+    document.getElementById('hide-earned').checked = false;
   }
-  document.getElementById('progress').textContent = `${earned.size} of ${doc.trophies.length} earned`;
+  renderAll();
+  document.getElementById('detail-pane').scrollTop = 0;
 }
 
-document.getElementById('export').addEventListener('click', () => {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify([...earned])], { type: 'application/json' }));
-  a.download = 'trophy-progress.json';
-  a.click();
+function showView(view) {
+  state.view = view;
+  for (const tab of document.querySelectorAll('.tab')) {
+    tab.classList.toggle('is-active', tab.dataset.view === view);
+  }
+  for (const section of document.querySelectorAll('.view')) {
+    section.hidden = section.id !== `view-${view}`;
+  }
+}
+
+for (const tab of document.querySelectorAll('.tab')) {
+  tab.addEventListener('click', () => { showView(tab.dataset.view); renderAll(); });
+}
+
+document.getElementById('search').addEventListener('input', (event) => {
+  state.filters.search = event.target.value;
+  renderAll();
 });
-document.getElementById('import').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
+document.getElementById('kind-filter').addEventListener('change', (event) => {
+  state.filters.kind = event.target.value;
+  renderAll();
+});
+document.getElementById('grade-filter').addEventListener('change', (event) => {
+  state.filters.grade = event.target.value;
+  renderAll();
+});
+document.getElementById('hide-earned').addEventListener('change', (event) => {
+  state.filters.hideEarned = event.target.checked;
+  renderAll();
+});
+
+const spoilerToggle = document.getElementById('spoiler-toggle');
+spoilerToggle.checked = progress.spoilerShield;
+spoilerToggle.addEventListener('change', () => {
+  progress.spoilerShield = spoilerToggle.checked;
+  persistAndRender();
+});
+
+document.getElementById('export-btn').addEventListener('click', () => exportProgress(progress));
+
+document.getElementById('import-file').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
   if (!file) return;
-  earned = new Set(JSON.parse(await file.text()));
-  save();
-  render();
+  try {
+    const imported = parseImportedProgress(await file.text());
+    progress.earned = imported.earned;
+    progress.counts = imported.counts;
+    progress.notes = imported.notes;
+    progress.spoilerShield = imported.spoilerShield;
+    spoilerToggle.checked = progress.spoilerShield;
+    persistAndRender();
+  } catch {
+    alert('That file could not be read as an atlas progress export. Nothing was changed.');
+  }
+  event.target.value = '';
 });
-grade.addEventListener('change', render);
-render();
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!confirm('Reset all progress? Earned ticks, counters, notes and the spoiler setting will be cleared.')) return;
+  progress.earned = {};
+  progress.counts = {};
+  progress.notes = {};
+  progress.spoilerShield = false;
+  spoilerToggle.checked = false;
+  persistAndRender();
+});
+
+renderAll();

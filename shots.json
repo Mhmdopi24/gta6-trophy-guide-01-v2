@@ -1,5 +1,1 @@
-[
-  { "file": "1-checklist.jpg", "path": "/", "viewport": { "width": 1280, "height": 800 } },
-  { "file": "2-silver.jpg", "path": "/", "grade": "silver", "viewport": { "width": 1280, "height": 800 } },
-  { "file": "3-bronze.jpg", "path": "/", "grade": "bronze", "scroll": 1400, "viewport": { "width": 1280, "height": 800 } }
-]
+[{"detail":"Actions Speak Louder (missable) guide open","file":"01-cover.jpg","seed":"13 of 55 earned, counters part-way","view":"checklist","viewport":{"height":800,"width":1280}},{"file":"02-roadmap.jpg","seed":"13 of 55 earned, counters part-way","view":"roadmap","viewport":{"height":800,"width":1280}},{"file":"03-missables.jpg","seed":"13 of 55 earned, counters part-way","view":"missables","viewport":{"height":800,"width":1280}},{"detail":"spoiler shield on, unearned story trophies masked","file":"04-spoilers.jpg","seed":"13 of 55 earned, counters part-way","view":"checklist","viewport":{"height":800,"width":1280}}]
